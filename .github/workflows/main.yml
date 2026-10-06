@@ -1,0 +1,50 @@
+name: Build BetterCopy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    name: Build Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+
+      - name: Build Release
+        run: cargo build --release
+
+      - name: Verify binaries
+        shell: pwsh
+        run: |
+          if (!(Test-Path "target\release\better_copy_gui.exe")) {
+            Write-Error "better_copy_gui.exe was not built"
+            exit 1
+          }
+
+          if (!(Test-Path "target\release\bcopy.exe")) {
+            Write-Error "bcopy.exe was not built"
+            exit 1
+          }
+
+      - name: Upload GUI
+        uses: actions/upload-artifact@v4
+        with:
+          name: BetterCopy-GUI-Windows-x64
+          path: target/release/better_copy_gui.exe
+
+      - name: Upload CLI
+        uses: actions/upload-artifact@v4
+        with:
+          name: BetterCopy-CLI-Windows-x64
+          path: target/release/bcopy.exe
